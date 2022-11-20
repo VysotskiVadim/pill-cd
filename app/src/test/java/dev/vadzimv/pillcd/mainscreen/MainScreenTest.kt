@@ -1,16 +1,16 @@
-package dev.vadzimv.pillcd
+package dev.vadzimv.pillcd.mainscreen
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
-class StoreTest {
+class MainScreenTest {
     @Test
     fun `change duration`() {
         val store = createStore()
         store.apply(Action.CoolDownTimeChanged("9"))
-        assertEquals("9", store.state.value.coolDownTimeFormatted)
-        assertEquals(true, store.state.value.addToCalendarButtonEnabled)
+        assertEquals("9", store.mainScreenState.value.coolDownTimeFormatted)
+        assertEquals(true, store.mainScreenState.value.addToCalendarButtonEnabled)
     }
 
     @Test
@@ -18,7 +18,7 @@ class StoreTest {
         val store = createStore()
         store.apply(Action.CoolDownTimeChanged("9"))
         store.apply(Action.CoolDownTimeChanged("9."))
-        assertEquals("9", store.state.value.coolDownTimeFormatted)
+        assertEquals("9", store.mainScreenState.value.coolDownTimeFormatted)
     }
 
     @Test
@@ -26,22 +26,22 @@ class StoreTest {
         val store = createStore()
         store.apply(Action.CoolDownTimeChanged("9"))
         store.apply(Action.CoolDownTimeChanged("-9"))
-        assertEquals("9", store.state.value.coolDownTimeFormatted)
+        assertEquals("9", store.mainScreenState.value.coolDownTimeFormatted)
     }
 
     @Test
     fun `change title`() {
         val store = createStore()
         store.apply(Action.TitleChanged("test"))
-        assertEquals("test", store.state.value.title)
+        assertEquals("test", store.mainScreenState.value.title)
     }
 
     @Test
     fun `empty duration makes button disabled`() {
         val store = createStore()
         store.apply(Action.CoolDownTimeChanged(""))
-        assertEquals("", store.state.value.coolDownTimeFormatted)
-        assertEquals(false, store.state.value.addToCalendarButtonEnabled)
+        assertEquals("", store.mainScreenState.value.coolDownTimeFormatted)
+        assertEquals(false, store.mainScreenState.value.addToCalendarButtonEnabled)
     }
 
     @Test

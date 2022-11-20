@@ -1,4 +1,4 @@
-package dev.vadzimv.pillcd
+package dev.vadzimv.pillcd.mainscreen
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,16 +31,16 @@ class Store(
     }
 
     private val _state = MutableStateFlow(initialScreenState)
-    val state: StateFlow<ScreenState> = _state
+    val mainScreenState: StateFlow<ScreenState> = _state
 
     fun apply(action: Action) {
         when (action) {
             Action.AddToCalendarClicked -> {
                 val currentTime = currentTimeProvider()
                 val event = CalendarEvent(
-                    title = state.value.title,
+                    title = mainScreenState.value.title,
                     begin = currentTime,
-                    end = currentTime + TimeUnit.HOURS.toMillis(state.value.coolDownTimeFormatted.toLong())
+                    end = currentTime + TimeUnit.HOURS.toMillis(mainScreenState.value.coolDownTimeFormatted.toLong())
                 )
                 addCalendarEvent(event)
             }
