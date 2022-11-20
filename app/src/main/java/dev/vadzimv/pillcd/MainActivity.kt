@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.CalendarContract
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,22 +16,19 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
 import dev.vadzimv.pillcd.ui.theme.PillCoolDoownTheme
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneOffset
 import java.util.Date
-import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+
+    private val screenViewModel by viewModels<AndroidViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -40,8 +38,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Screen { duration, title ->
-                        insertEvent(duration, title)
+                    val state by screenViewModel.store.state.collectAsState()
+                    Screen(state) {
+                        screenViewModel.store.apply(it)
                     }
                 }
             }
@@ -54,31 +53,33 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DefaultPreview() {
     PillCoolDoownTheme {
-        Screen { _,_ -> }
+        Screen(Store.initialScreenState) { }
     }
 }
 
 @Composable
 private fun Screen(
-    insertEvent: (duration: Long, title: String) -> Unit
+    state: ScreenState,
+    actions: (Action) -> Unit
 ) {
-    Column() {
-        var coolDownValue by remember { mutableStateOf("6") }
+    Column {
         TextField(
             label = { Text("Cool down in hours") },
-            value = coolDownValue,
-            onValueChange = { coolDownValue = it },
+            value = state.coolDownTimeFormatted,
+            onValueChange = { actions(Action.CoolDownTimeChanged(it)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
-        var coolDownTitle by remember { mutableStateOf("Ibum") }
         TextField(
             label = { Text("Title") },
-            value = coolDownTitle,
-            onValueChange = { coolDownTitle = it }
+            value = state.title,
+            onValueChange = { actions(Action.TitleChanged(it)) }
         )
-        Button(onClick = {
-            insertEvent(TimeUnit.HOURS.toMillis(coolDownValue.toLong()), coolDownTitle)
-        }) {
+        Button(
+            onClick = {
+                actions(Action.AddToCalendarClicked)
+            },
+            enabled = state.addToCalendarButtonEnabled
+        ) {
             Text(text = "Add to calendar")
         }
     }
@@ -100,4 +101,8 @@ fun Activity.insertEvent(durationMillis: Long, title: String) {
         putExtra(CalendarContract.Events.ALL_DAY, false)
     }
     startActivity(addEventIntent)
+}
+
+class AndroidViewModel : ViewModel() {
+    val store: Store = Store()
 }
