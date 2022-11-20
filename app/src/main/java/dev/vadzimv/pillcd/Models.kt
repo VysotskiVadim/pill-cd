@@ -44,11 +44,18 @@ class Store(
                 )
                 addCalendarEvent(event)
             }
-            is Action.CoolDownTimeChanged ->
-                updateState { it.copy(
-                    coolDownTimeFormatted = action.newValue,
-                    addToCalendarButtonEnabled = action.newValue.isNotBlank()
-                ) }
+            is Action.CoolDownTimeChanged -> {
+                val longValue = action.newValue.toLongOrNull()
+                val isValidDuration = action.newValue.isBlank() || (longValue != null && longValue > 0)
+                if (isValidDuration) {
+                    updateState {
+                        it.copy(
+                            coolDownTimeFormatted = action.newValue,
+                            addToCalendarButtonEnabled = action.newValue.isNotBlank()
+                        )
+                    }
+                }
+            }
             is Action.TitleChanged ->
                 updateState { it.copy(title = action.newTitle) }
         }

@@ -14,6 +14,22 @@ class StoreTest {
     }
 
     @Test
+    fun `enter float duration`() {
+        val store = createStore()
+        store.apply(Action.CoolDownTimeChanged("9"))
+        store.apply(Action.CoolDownTimeChanged("9."))
+        assertEquals("9", store.state.value.coolDownTimeFormatted)
+    }
+
+    @Test
+    fun `enter negative duration`() {
+        val store = createStore()
+        store.apply(Action.CoolDownTimeChanged("9"))
+        store.apply(Action.CoolDownTimeChanged("-9"))
+        assertEquals("9", store.state.value.coolDownTimeFormatted)
+    }
+
+    @Test
     fun `change title`() {
         val store = createStore()
         store.apply(Action.TitleChanged("test"))
