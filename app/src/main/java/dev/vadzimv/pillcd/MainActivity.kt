@@ -22,7 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import dev.vadzimv.pillcd.ui.theme.PillCoolDoownTheme
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.consumeAsFlow
 import java.util.Date
 
 class MainActivity : ComponentActivity() {
@@ -43,6 +48,11 @@ class MainActivity : ComponentActivity() {
                         screenViewModel.store.apply(it)
                     }
                 }
+            }
+        }
+        lifecycleScope.launchWhenCreated {
+            screenViewModel.activityActionChannel.consumeAsFlow().collect {
+                it(this@MainActivity)
             }
         }
     }
@@ -85,18 +95,17 @@ private fun Screen(
     }
 }
 
-fun Activity.insertEvent(durationMillis: Long, title: String) {
+fun Activity.insertEvent(event: CalendarEvent) {
     val addEventIntent = Intent(Intent.ACTION_EDIT).apply {
         type = "vnd.android.cursor.item/event"
-        putExtra(CalendarContract.Events.TITLE, title)
-        val now = Date().time
+        putExtra(CalendarContract.Events.TITLE, event.title)
         putExtra(
             CalendarContract.EXTRA_EVENT_BEGIN_TIME,
-            now
+            event.begin
         )
         putExtra(
             CalendarContract.EXTRA_EVENT_END_TIME,
-            now + durationMillis
+            event.end
         )
         putExtra(CalendarContract.Events.ALL_DAY, false)
     }
@@ -104,5 +113,16 @@ fun Activity.insertEvent(durationMillis: Long, title: String) {
 }
 
 class AndroidViewModel : ViewModel() {
-    val store: Store = Store()
+    val store: Store = Store(
+        addCalendarEvent = { event ->
+            activityActionChannel.trySend {
+                it.insertEvent(event)
+            }
+        },
+        currentTimeProvider = { Date().time }
+    )
+
+    val activityActionChannel = Channel<ActivityAction>(BUFFERED)
 }
+
+typealias ActivityAction = (Activity) -> Unit

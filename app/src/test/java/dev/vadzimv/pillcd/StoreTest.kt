@@ -1,6 +1,7 @@
 package dev.vadzimv.pillcd
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class StoreTest {
@@ -26,6 +27,31 @@ class StoreTest {
         assertEquals("", store.state.value.coolDownTimeFormatted)
         assertEquals(false, store.state.value.addToCalendarButtonEnabled)
     }
+
+    @Test
+    fun `insert 5 hours cd`() {
+        var addedEvent: CalendarEvent? = null
+        val store = createStore(
+            currentTimeProvider = { 3L },
+            insertCalendarEvent = { addedEvent = it}
+        )
+        store.apply(Action.CoolDownTimeChanged("5"))
+        store.apply(Action.TitleChanged("test"))
+        store.apply(Action.AddToCalendarClicked)
+
+        assertNotNull(addedEvent)
+        val event = addedEvent!!
+        assertEquals(3, event.begin)
+        assertEquals(5*60*60*1000 + 3, event.end)
+        assertEquals("test", event.title)
+    }
 }
 
-private fun createStore() = Store()
+private fun createStore(
+    currentTimeProvider: () -> Long = { 0L },
+    insertCalendarEvent: (CalendarEvent) -> Unit = {}
+) =
+    Store(
+        currentTimeProvider,
+        insertCalendarEvent,
+    )
