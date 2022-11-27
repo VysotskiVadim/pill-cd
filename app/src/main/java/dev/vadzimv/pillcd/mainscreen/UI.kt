@@ -43,5 +43,12 @@ fun MainScreen(
         ) {
             Text(text = "Add to calendar")
         }
+        if (state.latestPills.isNotEmpty()) {
+            Text(text = "Recently used values")
+            state.latestPills.forEach { pillCoolDown ->
+                Text(text = "${pillCoolDown.title}: ${pillCoolDown.duration}")
+            }
+        }
+
     }
 }
