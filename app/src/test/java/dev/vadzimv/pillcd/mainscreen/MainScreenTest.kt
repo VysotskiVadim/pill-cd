@@ -103,6 +103,24 @@ class MainScreenTest {
         val latestPills = store.mainScreenState.value.latestPills
         assertEquals(listOf<Long>(2, 1), latestPills.map { it.duration.inWholeHours })
     }
+
+    @Test
+    fun `selected last actions overrides selected values`() {
+        val store = createStore()
+
+        store.apply(Action.CoolDownTimeChanged("1"))
+        store.apply(Action.TitleChanged("test"))
+        store.apply(Action.AddToCalendarClicked)
+
+        store.apply(Action.CoolDownTimeChanged("2"))
+        store.apply(Action.TitleChanged("test2"))
+
+        store.apply(Action.LatestPillCoolDownClicked(store.mainScreenState.value.latestPills.first()))
+
+        val state = store.mainScreenState.value
+        assertEquals("test", state.title)
+        assertEquals("1", state.coolDownTimeFormatted)
+    }
 }
 
 private fun createStore(

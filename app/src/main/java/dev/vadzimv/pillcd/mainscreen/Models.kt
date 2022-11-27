@@ -2,7 +2,6 @@ package dev.vadzimv.pillcd.mainscreen
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -23,6 +22,7 @@ sealed interface Action {
     data class CoolDownTimeChanged(val newValue: String) : Action
     object AddToCalendarClicked : Action
     data class TitleChanged(val newTitle: String) : Action
+    data class LatestPillCoolDownClicked(val pillCoolDown: PillCoolDown) : Action
 }
 
 class Store(
@@ -32,8 +32,8 @@ class Store(
 
     companion object {
         val initialScreenState = ScreenState(
-            coolDownTimeFormatted = "5",
-            title = "Ibum",
+            coolDownTimeFormatted = "",
+            title = "",
             addToCalendarButtonEnabled = true,
             latestPills = emptyList()
         )
@@ -46,7 +46,8 @@ class Store(
         when (action) {
             Action.AddToCalendarClicked -> {
                 val currentTime = currentTimeProvider()
-                val coolDownDuration = mainScreenState.value.coolDownTimeFormatted.toLong().toDuration(DurationUnit.HOURS)
+                val coolDownDuration = mainScreenState.value.coolDownTimeFormatted.toLong()
+                    .toDuration(DurationUnit.HOURS)
                 val title = mainScreenState.value.title
                 val event = CalendarEvent(
                     title = title,
@@ -71,6 +72,13 @@ class Store(
             }
             is Action.TitleChanged ->
                 updateState { it.copy(title = action.newTitle) }
+            is Action.LatestPillCoolDownClicked ->
+                updateState {
+                    it.copy(
+                        title = action.pillCoolDown.title,
+                        coolDownTimeFormatted = action.pillCoolDown.duration.inWholeHours.toString()
+                    )
+                }
         }
     }
 
