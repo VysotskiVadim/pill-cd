@@ -1,7 +1,9 @@
 package dev.vadzimv.pillcd.mainscreen
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -25,9 +27,11 @@ sealed interface Action {
     data class LatestPillCoolDownClicked(val pillCoolDown: PillCoolDown) : Action
 }
 
-class Store(
-    val currentTimeProvider: () -> Long,
-    val addCalendarEvent: (CalendarEvent) -> Unit
+class MainScreenViewModel(
+    private val currentTimeProvider: () -> Long,
+    private val addCalendarEvent: (CalendarEvent) -> Unit,
+    private val pillsCoolDownStorage: PillsCoolDownStorage,
+    private val scope: CoroutineScope
 ) {
 
     companion object {
@@ -41,6 +45,17 @@ class Store(
 
     private val _state = MutableStateFlow(initialScreenState)
     val mainScreenState: StateFlow<ScreenState> = _state
+
+    init {
+        scope.launch {
+            val result = pillsCoolDownStorage.restore()
+            if (result is RestoreResult.Success) {
+                updateState {
+                    it.copy(latestPills = result.values)
+                }
+            }
+        }
+    }
 
     fun apply(action: Action) {
         when (action) {
@@ -84,25 +99,29 @@ class Store(
 
     private fun updateLatestCoolDown(coolDownDuration: Duration, title: String) {
         updateState { state ->
-            state.copy(
-                latestPills = state.latestPills.toMutableList().apply {
-                    val indexOfTheSame =
-                        indexOfFirst { it.duration == coolDownDuration && it.title == title }
-                    if (indexOfTheSame == -1) {
-                        add(
-                            0, PillCoolDown(
-                                title = title,
-                                duration = coolDownDuration
-                            )
+            val latestPills = state.latestPills.toMutableList().apply {
+                val indexOfTheSame =
+                    indexOfFirst { it.duration == coolDownDuration && it.title == title }
+                if (indexOfTheSame == -1) {
+                    add(
+                        0, PillCoolDown(
+                            title = title,
+                            duration = coolDownDuration
                         )
-                    } else {
-                        val element = removeAt(indexOfTheSame)
-                        add(0, element)
-                    }
-                    if (size > 3) {
-                        removeLast()
-                    }
+                    )
+                } else {
+                    val element = removeAt(indexOfTheSame)
+                    add(0, element)
                 }
+                if (size > 3) {
+                    removeLast()
+                }
+            }
+            scope.launch {
+                pillsCoolDownStorage.save(latestPills)
+            }
+            state.copy(
+                latestPills = latestPills
             )
         }
     }

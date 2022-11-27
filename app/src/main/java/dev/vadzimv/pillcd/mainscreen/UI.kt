@@ -18,7 +18,7 @@ import dev.vadzimv.pillcd.ui.theme.PillCoolDoownTheme
 @Composable
 fun DefaultPreview() {
     PillCoolDoownTheme {
-        MainScreen(Store.initialScreenState) { }
+        MainScreen(MainScreenViewModel.initialScreenState) { }
     }
 }
 
