@@ -83,7 +83,7 @@ class MainScreenTest {
 
         assertEquals(5, addedEventsCount)
         val latestPills = viewModel.mainScreenState.value.latestPills
-        assertEquals(listOf<Long>(5, 4, 3), latestPills.map { it.duration.inWholeHours })
+        assertEquals(listOf<Long>(5, 4, 3, 2, 1), latestPills.map { it.duration.inWholeHours })
     }
 
     @Test

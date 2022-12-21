@@ -113,9 +113,6 @@ class MainScreenViewModel(
                     val element = removeAt(indexOfTheSame)
                     add(0, element)
                 }
-                if (size > 3) {
-                    removeLast()
-                }
             }
             scope.launch {
                 pillsCoolDownStorage.save(latestPills)
